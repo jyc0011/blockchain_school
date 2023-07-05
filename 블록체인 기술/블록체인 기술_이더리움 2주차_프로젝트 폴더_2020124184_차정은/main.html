@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <!-- https://cdnjs.com/libraries/web3 -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.9.0/web3.min.js"
+          integrity="sha512-mUvdtCaVKd9dby/UnYGKMLkP3eT7EA6QNFN5iSEjvMf8TFPq2oZFIemWL46iypQcL8xYNdx7wQIA1oYnTXuYhg=="
+          crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        <!-- https://github.com/ipfs/js-ipfs/blob/master/packages/ipfs-http-client/README/md -->
+        <script src="https://unpkg.com/ipfs-http-client@52.0.2/dist/index.min.js"></script>
+        <!-- bootstrap -->
+        <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap-theme.min.css">
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>
+
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+    </head>
+
+    <body class="container">
+        <!-- 비밀키를 기반으로 계정 정보 확인(보유 ETH, 보유NFT 양) -->
+        <div>
+            <div class="form-group">
+                <!-- 비밀키를 기반으로 가져온 지갑 주소 표시 -->
+                <label>지갑 주소: </label>
+                <span id="wallet-address"></span>
+            </div>
+            <div class="form-group">
+                <!-- 가져온 지갑의 ETH 잔고 표시 -->
+                <label>보유 ETH: </label>
+                <span id="eth_balance"></span>
+            </div>
+            <div class="form-group">
+                <!-- 가져온 지갑의 NFT 보유량 표시 -->
+                <label>보유 NFT: </label>
+                <span id="nft_balance"></span>
+            </div>
+
+            <div class="form-inline">
+                <!-- 비밀키를 입력받는 영역 -->
+                <input id="pk" class="form-control" type="text" placeholder="PRIVATE KEY">
+                <button class="btn btn-default" id="wallet-import-btn">지갑 가져오기</button>
+            </div>
+        </div>
+
+        <hr></hr>
+
+        <!-- 불러온 계정에서 NFT 발행 -->
+        <div>
+            <div class="form-group">
+                <!-- 발행할 NFT의 이름 지정 -->
+                <label>Name </label>
+                <input type="text" id="nft-name">
+            </div>
+            <div class="form-group">
+                <!-- 발행할 NFT 이미지 가져오기 -->
+                <label>File </label>
+                <input type="file" id="nft-file">
+            </div>
+            <div class="form-group">
+                <!-- 발행할 NFT의 속성을 드롭다운 메뉴로 지정 -->
+                <label>My Attributes </label>
+                <select id="nft-myAttribute-1">
+                    <option value="value1">Value1</option>
+                    <option value="value2">Value2</option>
+                </select>
+                <!-- 드롭다운 메뉴 및 옵션을 더 추가하실 수 있습니다 -->
+            </div>
+            <!-- 버튼을 클릭하여 NFT 발행 -->
+            <button class="btn btn-default" id="nft-gen-btn">NFT 생성하기</button>
+        </div>
+
+        <hr></hr>
+
+        <!-- 토큰ID를 기반으로 NFT의 주소 및 소유자 주소 찾기 -->
+        <div>
+            <div class="form-group">
+                <!-- NFT 정보를 불러올 토큰Id 입력 -->
+                <label>토큰 ID</label>
+                <input class="form-control" type="number" id="nft-tokenId" placeholder="토큰 ID를 입력해 주세요">
+            </div>
+            <!-- 검색한 토큰Id의 이미지 표시 -->
+            <div id="image-container"></div>
+            <!-- 검색한 토큰의 소유자, 이름, path, 속성 출력-->
+            <div class="form-group">
+                <label>Owner address</label>
+                <span id="nft-owner-address-search"></span>
+            </div>
+            <div class="form-group">
+                <label>Name </label>
+                <span id="nft-name-search"></span>
+            </div>
+            <div>
+                <label>File path </label>
+                <span id="ipfs-path-search"></span>
+            </div>
+            <div>
+                <label>File Attributes: </label>
+                <span id="nft-attributes"></span>
+            </div>
+            <div>
+                <label>Owner History: </label>
+                <span id="nft-owner-history"></span>
+            </div>
+            <!-- 버튼을 눌러 입력받은 토큰Id의 정보 조회 -->
+            <button class="btn btn-default" id="nft-search-btn">NFT 조회하기</button>
+        </div>
+
+        <hr></hr>
+
+        <!-- 토큰 판매 기능 -->
+        <div>
+            <div class="form-group">
+                <!-- 판매하려는 토큰Id 입력 -->
+                <label>토큰 판매하기</label>
+                <input id="tokenId-onSale" type="number" placeholder="판매하려는 토큰ID를 입력해주세요">
+            </div>
+            <!-- 버튼을 눌러 해당 토큰Id를 판매 상태로 지정 -->
+            <button class="btn btn-default" id="nft-onSale-btn">NFT 판매하기</button>
+        </div>
+
+        <hr></hr>
+        <!-- 토큰 구매 기능 -->
+        <div>
+            <div class="form-group">
+                <!-- 구매하려는 토큰Id 입력 -->
+                <label>토큰 구매하기</label>
+                <input id="value-to-buy" type="number"
+                    placeholder="전송하고자 하는 가격을 입력해주세요(단위: ETH, 기본 5 ETH 이상)">
+                <input id="tokenId-to-buy" type="number"
+                    placeholder="구매하고자 하는 토큰ID를 입력해주세요">
+            </div>
+            <!-- 버튼을 눌러 해당 토큰Id를 구매 -->
+            <button class="btn btn-default" id="nft-buy-btn">NFT 구매하기</button>
+        </div>
+
+        <hr></hr>
+
+        <script type="module" src="./main.js"></script>
+    </body>
+</html>
